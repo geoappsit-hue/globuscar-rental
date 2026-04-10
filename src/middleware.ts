@@ -7,5 +7,5 @@ export default withAuth({
 });
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/api/cars/:path*', '/api/generate/:path*', '/api/ocr/:path*'],
+  matcher: ['/dashboard/:path*', '/api/:path*'],
 };

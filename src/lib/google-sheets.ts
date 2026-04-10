@@ -87,7 +87,7 @@ export async function getCars(): Promise<Car[]> {
   const rows = response.data.values || [];
   return rows
     .map(rowToCar)
-    .filter(car => car.note?.toLowerCase().includes('готово')); // Only cars marked as ready
+    .filter(car => car.note && car.note.toLowerCase().includes('готово')); // Only cars marked as ready
 }
 
 export async function getCarById(id: string): Promise<Car | null> {

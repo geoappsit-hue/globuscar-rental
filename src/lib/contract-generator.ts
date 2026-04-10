@@ -26,7 +26,7 @@ function addDays(dateStr: string, days: number): string {
 }
 
 // Build template variables from contract data
-export function buildTemplateVars(data: ContractData) {
+export function buildTemplateVars(data: ContractData): Record<string, string> {
   const startDate = formatDate(data.rental.startDate);
   const endDate = addDays(startDate, data.rental.durationDays);
 
@@ -72,7 +72,7 @@ export function buildTemplateVars(data: ContractData) {
     LANDLORD_COMPANY: 'P/E KHMIADASHVILI NIKOLAY',
     LANDLORD_ID: '405290466',
     LANDLORD_ADDRESS: 'Грузия, Пекина д. 7, кв. 20',
-    LANDLORD_ADDESS_GEO: 'სლლუჲვკდი, პეკინის გამზირი ს. 7, ბინა. 20',
+    LANDLORD_ADDRESS_GEO: 'საქართველო, თბილისი, პეკინის გამზირი ს. 7, ბინა. 20',
     LANDLORD_ACCOUNT: 'GE62BG0000000101492734GEL',
     LANDLORD_EMAIL: 'grade-4b@ya.ru',
     LANDLORD_PHONE: '+995599125743',
@@ -126,7 +126,7 @@ export async function generateGoogleDoc(data: ContractData): Promise<string> {
     { from: '20.09.1998', to: vars.CLIENT_BIRTH_DATE },
     { from: 'RUS 77 0642165', to: vars.CLIENT_PASSPORT },
     { from: '27.06.2023', to: vars.CLIENT_PASSPORT_ISSUED },
-    { from: '27.06.2033', to: vars.CLIENT_PASSQORT_VALID },
+    { from: '27.06.2033', to: vars.CLIENT_PASSPORT_VALID },
     { from: 'МВД 78003', to: vars.CLIENT_PASSPORT_ISSUED_BY },
     { from: '+79215885778', to: vars.CLIENT_PHONE },
     { from: '4 сутки', to: `${vars.DURATION_DAYS} сутки` },
@@ -155,7 +155,7 @@ export async function generateGoogleDoc(data: ContractData): Promise<string> {
   return `https://docs.google.com/document/d/${newDocId}/edit`;
 }
 
-// Generate DOCa UCing template
+// Generate DOCX using template
 export async function generateDocx(data: ContractData): Promise<Buffer> {
   const vars = buildTemplateVars(data);
 
@@ -198,12 +198,13 @@ async function generateSimpleDocx(data: ContractData, vars: Record<string, strin
 
   if (!docId) throw new Error('Failed to create Google Doc');
 
-  const response = await drive.files.export({
-    fileId: docId,
-    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  }, {
-    responseType: 'arraybuffer',
-  });
+  const response = await drive.files.export(
+    {
+      fileId: docId,
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    },
+    { responseType: 'arraybuffer' }
+  );
 
   return Buffer.from(response.data as ArrayBuffer);
 }
@@ -219,12 +220,13 @@ export async function generatePdf(data: ContractData): Promise<Buffer> {
 
   if (!docId) throw new Error('Failed to create Google Doc');
 
-  const response = await drive.files.export({
-    fileId: docId,
-    mimeType: 'application/pdf',
-  }, {
-    responseType: 'arraybuffer',
-  });
+  const response = await drive.files.export(
+    {
+      fileId: docId,
+      mimeType: 'application/pdf',
+    },
+    { responseType: 'arraybuffer' }
+  );
 
   return Buffer.from(response.data as ArrayBuffer);
 }
