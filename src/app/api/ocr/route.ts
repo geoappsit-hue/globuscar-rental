@@ -27,10 +27,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
-  },
-};
+// Route segment config for App Router
+export const maxDuration = 30;
+export const dynamic = 'force-dynamic';
