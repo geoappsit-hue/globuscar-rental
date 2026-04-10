@@ -26,7 +26,7 @@ function addDays(dateStr: string, days: number): string {
 }
 
 // Build template variables from contract data
-export function buildTemplateVars(data: ContractData): Record<string, string> {
+export function buildTemplateVars(data: ContractData) {
   const startDate = formatDate(data.rental.startDate);
   const endDate = addDays(startDate, data.rental.durationDays);
 
@@ -69,7 +69,7 @@ export function buildTemplateVars(data: ContractData): Record<string, string> {
 
     // Landlord data (constant)
     LANDLORD_NAME: 'Khmiadashvili Nikolay',
-    LANDLORD_COMPANY: 'P.E KHMIADASHVILI NIKOLAY',
+    LANDLORD_COMPANY: 'P/E KHMIADASHVILI NIKOLAY',
     LANDLORD_ID: '405290466',
     LANDLORD_ADDRESS: 'Грузия, Пекина д. 7, кв. 20',
     LANDLORD_ADDRESS_GEO: 'საქართველო, თბილისი, პეკინის გამზირი ს. 7, ბინა. 20',
@@ -198,13 +198,12 @@ async function generateSimpleDocx(data: ContractData, vars: Record<string, strin
 
   if (!docId) throw new Error('Failed to create Google Doc');
 
-  const response = await drive.files.export(
-    {
-      fileId: docId,
-      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    },
-    { responseType: 'arraybuffer' }
-  );
+  const response = await drive.files.export({
+    fileId: docId,
+    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  }, {
+    responseType: 'arraybuffer',
+  });
 
   return Buffer.from(response.data as ArrayBuffer);
 }
@@ -220,15 +219,12 @@ export async function generatePdf(data: ContractData): Promise<Buffer> {
 
   if (!docId) throw new Error('Failed to create Google Doc');
 
-  const response = await drive.files.export(
-    {
-      fileId: docId,
-      mimeType: 'application/pdf',
-    },
-    { responseType: 'arraybuffer' }
-  
-  }
-  );
+  const response = await drive.files.export({
+    fileId: docId,
+    mimeType: 'application/pdf',
+  }, {
+    responseType: 'arraybuffer',
+  });
 
   return Buffer.from(response.data as ArrayBuffer);
 }
