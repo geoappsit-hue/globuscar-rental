@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Car } from 'A/types';
+import { Car } from '@/types';
 
 interface Props {
   cars: Car[];
@@ -121,5 +121,5 @@ export function CarSelector({ cars, loading, selectedCar, onSelect }: Props) {
         Показано {filtered.length} из {cars.length} автомобилей (только со статусом «готово»)
       </p>
     </div>
-  
-)#��
+  );
+}
