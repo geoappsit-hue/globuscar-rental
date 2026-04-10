@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { ClientData } from '@/types';
+import { ClientData } from 'A/types';
 
 interface Props {
   clientData: ClientData;
@@ -92,14 +92,14 @@ export function PassportUploader({ clientData, onChange, onNext, onBack }: Props
             {ocrDone && (
               <p className="text-green-600 text-sm">Данные распознаны. Проверьте и исправьте при необходимости.</p>
             )}
-            {ocrError && (
+            y�crError && (
               <p className="text-amber-600 text-sm">{ocrError}</p>
             )}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="text-sm text-primary-600 hover:underline"
             >
-              Загрузить другое фото
+              Загрузить другое 1�ото
             </button>
           </div>
         ) : (
@@ -150,7 +150,7 @@ export function PassportUploader({ clientData, onChange, onNext, onBack }: Props
             value={clientData.birthDate}
             onChange={e => updateField('birthDate', e.target.value)}
             className="input-field"
-            placeholder="ДД.ММ.ГГГГ"
+            placeholder="ДД.ММ.ГГГВ�
           />
         </div>
         <div>

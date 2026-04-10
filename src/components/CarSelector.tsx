@@ -32,14 +32,14 @@ export function CarSelector({ cars, loading, selectedCar, onSelect }: Props) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
-        <span className="ml-3 text-gray-500">Загрузка автомобилей ...</span>
+        <span className="ml-3 text-gray-500">Загрузка автомобилей...</span>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Шаг 1:  Автомобиль</h3>
+      <h3 className="text-lg font-semibold">Шаг 1: Выберите автомобиль</h3>
 
       {/* Filters */}
       <div className="flex gap-3">
@@ -122,4 +122,4 @@ export function CarSelector({ cars, loading, selectedCar, onSelect }: Props) {
       </p>
     </div>
   
-  }
+)#��

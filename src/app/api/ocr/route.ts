@@ -28,5 +28,5 @@ export async function POST(request: NextRequest) {
 }
 
 // Route segment config for App Router
-export const maxDuration = 30;
+export const maxDuration = 30; // max execution time in seconds
 export const dynamic = 'force-dynamic';

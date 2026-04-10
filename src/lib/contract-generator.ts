@@ -69,7 +69,7 @@ export function buildTemplateVars(data: ContractData): Record<string, string> {
 
     // Landlord data (constant)
     LANDLORD_NAME: 'Khmiadashvili Nikolay',
-    LANDLORD_COMPANY: 'P/E KHMIADASHVILI NIKOLAY',
+    LANDLORD_COMPANY: 'P.E KHMIADASHVILI NIKOLAY',
     LANDLORD_ID: '405290466',
     LANDLORD_ADDRESS: 'Грузия, Пекина д. 7, кв. 20',
     LANDLORD_ADDRESS_GEO: 'საქართველო, თბილისი, პეკინის გამზირი ს. 7, ბინა. 20',
@@ -226,6 +226,8 @@ export async function generatePdf(data: ContractData): Promise<Buffer> {
       mimeType: 'application/pdf',
     },
     { responseType: 'arraybuffer' }
+  
+  }
   );
 
   return Buffer.from(response.data as ArrayBuffer);
