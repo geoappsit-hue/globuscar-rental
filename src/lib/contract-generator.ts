@@ -60,7 +60,7 @@ export function buildTemplateVars(data: ContractData) {
     DAILY_RATE: data.rental.dailyRate.toString(),
     TOTAL_RENT: data.rental.totalRent.toString(),
     DEPOSIT: data.rental.deposit.toString(),
-    SUPER_KASKO: data.rental.superKasko ? 'Да / დიახ' : 'Нет / არა',
+    SUPER_KASKO: data.rental.superKasko ? 'ÐÐ° / áááá®' : 'ÐÐµÑ / áá á',
     SUPER_KASKO_TOTAL: data.rental.superKaskoTotal.toString(),
     DELIVERY_TYPE: data.rental.deliveryType,
     DELIVERY_COST: data.rental.deliveryCost.toString(),
@@ -71,8 +71,8 @@ export function buildTemplateVars(data: ContractData) {
     LANDLORD_NAME: 'Khmiadashvili Nikolay',
     LANDLORD_COMPANY: 'P/E KHMIADASHVILI NIKOLAY',
     LANDLORD_ID: '405290466',
-    LANDLORD_ADDRESS: 'Грузия, Пекина д. 7, кв. 20',
-    LANDLORD_ADDRESS_GEO: 'საქართველო, თბილისი, პეკინის გამზირი ს. 7, ბინა. 20',
+    LANDLORD_ADDRESS: 'ÐÑÑÐ·Ð¸Ñ, ÐÐµÐºÐ¸Ð½Ð° Ð´. 7, ÐºÐ². 20',
+    LANDLORD_ADDRESS_GEO: 'á¡áá¥áá ááááá, áááááá¡á, ááááááá¡ áááááá á á¡. 7, áááá. 20',
     LANDLORD_ACCOUNT: 'GE62BG0000000101492734GEL',
     LANDLORD_EMAIL: 'grade-4b@ya.ru',
     LANDLORD_PHONE: '+995599125743',
@@ -89,7 +89,7 @@ export async function generateGoogleDoc(data: ContractData): Promise<string> {
 
   // Copy the template document
   const templateDocId = '1VbW68N29MY98Zmgawel4Vm3Voxj5Pnft2wm9YLC2T9o';
-  const fileName = `Договор ${vars.CONTRACT_NUMBER} - ${vars.CLIENT_NAME} - ${vars.CAR_BRAND_MODEL}`;
+  const fileName = `ÐÐ¾Ð³Ð¾Ð²Ð¾Ñ ${vars.CONTRACT_NUMBER} - ${vars.CLIENT_NAME} - ${vars.CAR_BRAND_MODEL}`;
 
   const copy = await drive.files.copy({
     fileId: templateDocId,
@@ -127,10 +127,10 @@ export async function generateGoogleDoc(data: ContractData): Promise<string> {
     { from: 'RUS 77 0642165', to: vars.CLIENT_PASSPORT },
     { from: '27.06.2023', to: vars.CLIENT_PASSPORT_ISSUED },
     { from: '27.06.2033', to: vars.CLIENT_PASSPORT_VALID },
-    { from: 'МВД 78003', to: vars.CLIENT_PASSPORT_ISSUED_BY },
+    { from: 'ÐÐÐ 78003', to: vars.CLIENT_PASSPORT_ISSUED_BY },
     { from: '+79215885778', to: vars.CLIENT_PHONE },
-    { from: '4 сутки', to: `${vars.DURATION_DAYS} сутки` },
-    { from: '4 დღეღამის', to: `${vars.DURATION_DAYS} დღეღამის` },
+    { from: '4 ÑÑÑÐºÐ¸', to: `${vars.DURATION_DAYS} ÑÑÑÐºÐ¸` },
+    { from: '4 áá¦áá¦áááá¡', to: `${vars.DURATION_DAYS} áá¦áá¦áááá¡` },
     { from: '300  USD', to: `${vars.TOTAL_RENT}  USD` },
     { from: '100$', to: `${vars.DEPOSIT}$` },
   ];
@@ -205,6 +205,8 @@ async function generateSimpleDocx(data: ContractData, vars: Record<string, strin
     responseType: 'arraybuffer',
   });
 
+  // Clean up temp Google Doc to save storage
+  try { await drive.files.delete({ fileId: docId }); } catch (e) {}
   return Buffer.from(response.data as ArrayBuffer);
 }
 
@@ -226,5 +228,7 @@ export async function generatePdf(data: ContractData): Promise<Buffer> {
     responseType: 'arraybuffer',
   });
 
+  // Clean up temp Google Doc to save storage
+  try { await drive.files.delete({ fileId: docId }); } catch (e) {}
   return Buffer.from(response.data as ArrayBuffer);
 }
