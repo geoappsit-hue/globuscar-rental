@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
       case 'docx': {
         const buffer = await generateDocx(contractData);
-        return new NextResponse(buffer, {
+        return new Response(new Uint8Array(buffer), {
           headers: {
             'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'Content-Disposition': `attachment; filename="${baseName}.docx"`,
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         // PDF generation requires Google Drive storage which is unavailable for service accounts.
         // Return DOCX instead with appropriate filename.
         const buffer = await generatePdf(contractData);
-        return new NextResponse(buffer, {
+        return new Response(new Uint8Array(buffer), {
           headers: {
             'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'Content-Disposition': `attachment; filename="${baseName}.docx"`,
