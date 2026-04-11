@@ -79,46 +79,15 @@ function buildReplacements(vars: Record<string, string>): [string, string][] {
   ];
 }
 
-// Robust DOCX XML text replacement that handles Word's run-splitting
+// Simple text replacement in XML - replace directly in XML content
 function replaceTextInXml(xml: string, replacements: [string, string][]): string {
-  // Process each paragraph - collect text across runs, replace, redistribute
-  return xml.replace(/<w:p[ >][\s\S]*?<\/w:p>/g, (paragraph) => {
-    // Extract text from all <w:t> tags in this paragraph
-    const textParts: { match: string; text: string; index: number }[] = [];
-    const regex = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
-    let m;
-    while ((m = regex.exec(paragraph)) !== null) {
-      textParts.push({ match: m[0], text: m[1], index: m.index });
+  let result = xml;
+  for (const [from, to] of replacements) {
+    if (from && result.includes(from)) {
+      result = result.split(from).join(to || '');
     }
-    if (textParts.length === 0) return paragraph;
-
-    const fullText = textParts.map(p => p.text).join('');
-
-    // Check if any replacement matches
-    let modified = fullText;
-    let changed = false;
-    for (const [from, to] of replacements) {
-      if (from && modified.includes(from)) {
-        modified = modified.split(from).join(to || '');
-        changed = true;
-      }
-    }
-    if (!changed) return paragraph;
-
-    // Put all replaced text into first <w:t>, empty the rest
-    let first = true;
-    return paragraph.replace(/<w:t[^>]*>[\s\S]*?<\/w:t>/g, () => {
-      if (first) {
-        first = false;
-        return '<w:t xml:space="preserve">' + escapeXml(modified) + '</w:t>';
-      }
-      return '<w:t></w:t>';
-    });
-  });
-}
-
-function escapeXml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  return result;
 }
 
 // Download template as DOCX from Google Drive (read-only, no storage needed)
