@@ -130,7 +130,11 @@ async function downloadTemplateAsDocx(): Promise<Buffer> {
     fileId: templateDocId,
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   }, { responseType: 'arraybuffer' });
-  return Buffer.from(response.data as ArrayBuffer);
+  const buf = Buffer.from(response.data as ArrayBuffer);
+  if (buf.length < 100 || buf[0] !== 0x50 || buf[1] !== 0x4b) {
+    throw new Error('Template download failed: not a valid DOCX/ZIP file (' + buf.length + ' bytes)');
+  }
+  return buf;
 }
 
 // Replace text in all DOCX XML parts
@@ -154,7 +158,7 @@ function replaceInDocx(docxBuffer: Buffer, vars: Record<string, string>): Buffer
     zip.file(xmlFile, content);
   }
 
-  return Buffer.from(zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' }));
+  return Buffer.from(zip.generate({ type: 'uint8array', compression: 'DEFLATE' }));
 }
 
 // Generate DOCX locally (no Drive storage needed)
