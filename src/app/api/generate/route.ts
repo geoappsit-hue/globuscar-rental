@@ -20,13 +20,13 @@ export async function POST(request: NextRequest) {
       format: OutputFormat;
     };
 
-    // Get car data from Google Sheets
     const car = await getCarById(carId);
     if (!car) {
       return NextResponse.json({ error: 'Car not found' }, { status: 404 });
     }
 
     const contractData: ContractData = { car, client, rental };
+    const baseName = `Contract_${rental.contractNumber.replace(/\//g, '_')}`;
 
     switch (format) {
       case 'gdocs': {
@@ -36,22 +36,22 @@ export async function POST(request: NextRequest) {
 
       case 'docx': {
         const buffer = await generateDocx(contractData);
-        const fileName = `Contract_${rental.contractNumber}_${client.fullNameEn || client.fullName}.docx`;
         return new NextResponse(buffer, {
           headers: {
             'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'Content-Disposition': `attachment; filename="${fileName}"`,
+            'Content-Disposition': `attachment; filename="${baseName}.docx"`,
           },
         });
       }
 
       case 'pdf': {
+        // PDF generation requires Google Drive storage which is unavailable for service accounts.
+        // Return DOCX instead with appropriate filename.
         const buffer = await generatePdf(contractData);
-        const fileName = `Contract_${rental.contractNumber}_${client.fullNameEn || client.fullName}.pdf`;
         return new NextResponse(buffer, {
           headers: {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="${fileName}"`,
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'Content-Disposition': `attachment; filename="${baseName}.docx"`,
           },
         });
       }
@@ -67,3 +67,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const maxDuration = 30;
+export const dynamic = 'force-dynamic';
