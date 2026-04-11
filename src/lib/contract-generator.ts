@@ -137,11 +137,15 @@ export async function generateDocx(data: ContractData): Promise<Buffer> {
   return replaceInDocx(templateBuffer, vars);
 }
 
-// Generate Google Docs - requires Drive storage, may fail
+// Generate Google Docs - uses OAuth2 user account (khmiadashviliniko@gmail.com) to avoid service account Drive quota limit
 export async function generateGoogleDoc(data: ContractData): Promise<string> {
-  const auth = getGoogleAuth();
-  const drive = google.drive({ version: 'v3', auth });
-  const docs = google.docs({ version: 'v1', auth });
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_OAUTH_CLIENT_ID,
+    process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+  );
+  oauth2Client.setCredentials({ refresh_token: process.env.GOOGLE_OAUTH_REFRESH_TOKEN });
+  const drive = google.drive({ version: 'v3', auth: oauth2Client });
+  const docs = google.docs({ version: 'v1', auth: oauth2Client });
   const vars = buildTemplateVars(data);
   const templateDocId = process.env.GOOGLE_TEMPLATE_DOC_ID || '1VbW68N29MY98Zmgawel4Vm3Voxj5Pnft2wm9YLC2T9o';
   const fileName = `Договор ${vars.CONTRACT_NUMBER} - ${vars.CLIENT_NAME} - ${vars.CAR_BRAND_MODEL}`;
