@@ -1,9 +1,8 @@
-import { ContractData, OutputFormat } from '@/types';
+import { ContractData } from '@/types';
 import { google } from 'googleapis';
 import { getGoogleAuth } from './google-sheets';
 import PizZip from 'pizzip';
 
-// Format date to DD.MM.YYYY
 function formatDate(dateStr: string): string {
   if (!dateStr) return '';
   if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) return dateStr;
@@ -13,8 +12,9 @@ function formatDate(dateStr: string): string {
 }
 
 function addDays(dateStr: string, days: number): string {
-  const [dd, mm, yyyy] = dateStr.split('.');
-  const date = new Date(parseInt(yyyy), parseInt(mm) - 1, parseInt(dd));
+  const parts = dateStr.split('.');
+  if (parts.length !== 3) return dateStr;
+  const date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
   date.setDate(date.getDate() + days);
   return formatDate(date.toISOString());
 }
@@ -27,16 +27,16 @@ export function buildTemplateVars(data: ContractData) {
     CONTRACT_DATE: startDate,
     CAR_BRAND_MODEL: `${data.car.brand} ${data.car.model}`.toUpperCase(),
     CAR_PLATE: data.car.plateNumber,
-    CAR_VIN: data.car.vin,
+    CAR_VIN: data.car.vin || '',
     CAR_YEAR: data.car.year,
     CAR_COLOR: data.car.techPassportColor || data.car.color,
-    CAR_TECH_PASSPORT: data.car.techPassportNumber,
+    CAR_TECH_PASSPORT: data.car.techPassportNumber || '',
     CLIENT_NAME: data.client.fullNameEn || data.client.fullName,
     CLIENT_BIRTH_DATE: formatDate(data.client.birthDate),
     CLIENT_PASSPORT: data.client.passportNumber,
     CLIENT_PASSPORT_ISSUED: formatDate(data.client.passportIssuedDate),
     CLIENT_PASSPORT_VALID: formatDate(data.client.passportValidUntil),
-    CLIENT_PASSPORT_ISSUED_BY: data.client.passportIssuedBy,
+    CLIENT_PASSPORT_ISSUED_BY: data.client.passportIssuedBy || '',
     CLIENT_PHONE: data.client.phone,
     START_DATE: startDate,
     END_DATE: endDate,
@@ -46,60 +46,103 @@ export function buildTemplateVars(data: ContractData) {
     DEPOSIT: data.rental.deposit.toString(),
     SUPER_KASKO: data.rental.superKasko ? 'Да / დიახ' : 'Нет / არა',
     SUPER_KASKO_TOTAL: data.rental.superKaskoTotal.toString(),
-    DELIVERY_TYPE: data.rental.deliveryType,
+    DELIVERY_TYPE: data.rental.deliveryType || '',
     DELIVERY_COST: data.rental.deliveryCost.toString(),
-    FUEL_LEVEL: data.rental.fuelLevel,
+    FUEL_LEVEL: data.rental.fuelLevel || '',
     FRANCHISE: data.car.franchise || '500',
-    LANDLORD_NAME: 'Khmiadashvili Nikolay',
-    LANDLORD_COMPANY: 'P/E KHMIADASHVILI NIKOLAY',
-    LANDLORD_ID: '405290466',
-    LANDLORD_ADDRESS: 'Грузия, Пекина д. 7, кв. 20',
-    LANDLORD_ACCOUNT: 'GE62BG0000000101492734GEL',
-    LANDLORD_EMAIL: 'grade-4b@ya.ru',
-    LANDLORD_PHONE: '+995599125743',
   };
 }
 
-// Hardcoded sample values in the template that need to be replaced
-const TEMPLATE_REPLACEMENTS = [
-  { from: 'GOLOD TIMOFEI', key: 'CLIENT_NAME' },
-  { from: '04/0155', key: 'CONTRACT_NUMBER' },
-  { from: '09.04.2025', key: 'START_DATE' },
-  { from: 'FORD BRONCO', key: 'CAR_BRAND_MODEL' },
-  { from: 'PH913PP', key: 'CAR_PLATE' },
-  { from: '1FMDE5BH1NLB64197', key: 'CAR_VIN' },
-  { from: 'AJA7538667', key: 'CAR_TECH_PASSPORT' },
-  { from: '20.09.1998', key: 'CLIENT_BIRTH_DATE' },
-  { from: 'RUS 77 0642165', key: 'CLIENT_PASSPORT' },
-  { from: '27.06.2023', key: 'CLIENT_PASSPORT_ISSUED' },
-  { from: '27.06.2033', key: 'CLIENT_PASSPORT_VALID' },
-  { from: 'МВД 78003', key: 'CLIENT_PASSPORT_ISSUED_BY' },
-  { from: '+79215885778', key: 'CLIENT_PHONE' },
-  { from: '4 сутки', key: '_DURATION_RU' },
-  { from: '4 დღეღამის', key: '_DURATION_GE' },
-  { from: '300 USD', key: '_TOTAL_RENT_USD' },
-  { from: '100$', key: '_DEPOSIT_USD' },
-];
+// Build all text replacements (hardcoded sample values -> actual data)
+function buildReplacements(vars: Record<string, string>): [string, string][] {
+  return [
+    ['GOLOD TIMOFEI', vars.CLIENT_NAME],
+    ['04/0155', vars.CONTRACT_NUMBER],
+    ['09.04.2025', vars.START_DATE],
+    ['13.04.2025', vars.END_DATE],
+    ['FORD BRONCO', vars.CAR_BRAND_MODEL],
+    ['PH913PP', vars.CAR_PLATE],
+    ['1FMDE5BH1NLB64197', vars.CAR_VIN],
+    ['AJA7538667', vars.CAR_TECH_PASSPORT],
+    ['20.09.1998', vars.CLIENT_BIRTH_DATE],
+    ['RUS 77 0642165', vars.CLIENT_PASSPORT],
+    ['27.06.2023', vars.CLIENT_PASSPORT_ISSUED],
+    ['27.06.2033', vars.CLIENT_PASSPORT_VALID],
+    ['МВД 78003', vars.CLIENT_PASSPORT_ISSUED_BY],
+    ['+79215885778', vars.CLIENT_PHONE],
+    ['4 сутки', vars.DURATION_DAYS + ' сутки'],
+    ['4 დღეღამის', vars.DURATION_DAYS + ' დღეღამის'],
+    ['300 USD', vars.TOTAL_RENT + ' USD'],
+    ['100$', vars.DEPOSIT + '$'],
+    ['GREEN', vars.CAR_COLOR],
+    ['2022', vars.CAR_YEAR],
+  ];
+}
 
-// Download template DOCX from Google Drive (read-only, no storage needed)
+// Robust DOCX XML text replacement that handles Word's run-splitting
+function replaceTextInXml(xml: string, replacements: [string, string][]): string {
+  // Process each paragraph - collect text across runs, replace, redistribute
+  return xml.replace(/<w:p[ >][\s\S]*?<\/w:p>/g, (paragraph) => {
+    // Extract text from all <w:t> tags in this paragraph
+    const textParts: { match: string; text: string; index: number }[] = [];
+    const regex = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
+    let m;
+    while ((m = regex.exec(paragraph)) !== null) {
+      textParts.push({ match: m[0], text: m[1], index: m.index });
+    }
+    if (textParts.length === 0) return paragraph;
+
+    const fullText = textParts.map(p => p.text).join('');
+
+    // Check if any replacement matches
+    let modified = fullText;
+    let changed = false;
+    for (const [from, to] of replacements) {
+      if (from && modified.includes(from)) {
+        modified = modified.split(from).join(to || '');
+        changed = true;
+      }
+    }
+    if (!changed) return paragraph;
+
+    // Put all replaced text into first <w:t>, empty the rest
+    let first = true;
+    return paragraph.replace(/<w:t[^>]*>[\s\S]*?<\/w:t>/g, () => {
+      if (first) {
+        first = false;
+        return '<w:t xml:space="preserve">' + escapeXml(modified) + '</w:t>';
+      }
+      return '<w:t></w:t>';
+    });
+  });
+}
+
+function escapeXml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Download template as DOCX from Google Drive (read-only, no storage needed)
 async function downloadTemplateAsDocx(): Promise<Buffer> {
   const auth = getGoogleAuth();
   const drive = google.drive({ version: 'v3', auth });
   const templateDocId = process.env.GOOGLE_TEMPLATE_DOC_ID || '1VbW68N29MY98Zmgawel4Vm3Voxj5Pnft2wm9YLC2T9o';
-
   const response = await drive.files.export({
     fileId: templateDocId,
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   }, { responseType: 'arraybuffer' });
-
   return Buffer.from(response.data as ArrayBuffer);
 }
 
-// Replace text in DOCX XML content
+// Replace text in all DOCX XML parts
 function replaceInDocx(docxBuffer: Buffer, vars: Record<string, string>): Buffer {
   const zip = new PizZip(docxBuffer);
+  const replacements = buildReplacements(vars);
 
-  // Process all XML files in the DOCX
+  // Also add {{VAR}} replacements
+  for (const [key, value] of Object.entries(vars)) {
+    replacements.push(['{{' + key + '}}', value || '']);
+  }
+
   const xmlFiles = ['word/document.xml', 'word/header1.xml', 'word/header2.xml', 'word/header3.xml',
     'word/footer1.xml', 'word/footer2.xml', 'word/footer3.xml'];
 
@@ -107,76 +150,11 @@ function replaceInDocx(docxBuffer: Buffer, vars: Record<string, string>): Buffer
     const file = zip.file(xmlFile);
     if (!file) continue;
     let content = file.asText();
-
-    // Replace {{VAR}} placeholders (handling XML tags that may split the text)
-    for (const [key, value] of Object.entries(vars)) {
-      // Direct replacement
-      content = content.split('{{' + key + '}}').join(value || '');
-      // Also try with possible XML run splits
-      const regex = new RegExp('\\{\\{' + key.split('').join('(?:</w:t></w:r><w:r[^>]*><w:t[^>]*>)?') + '\\}\\}', 'g');
-      content = content.replace(regex, value || '');
-    }
-
-    // Replace hardcoded sample values
-    for (const repl of TEMPLATE_REPLACEMENTS) {
-      let replValue = '';
-      if (repl.key === '_DURATION_RU') replValue = vars.DURATION_DAYS + ' сутки';
-      else if (repl.key === '_DURATION_GE') replValue = vars.DURATION_DAYS + ' დღეღამის';
-      else if (repl.key === '_TOTAL_RENT_USD') replValue = vars.TOTAL_RENT + ' USD';
-      else if (repl.key === '_DEPOSIT_USD') replValue = vars.DEPOSIT + '$';
-      else replValue = vars[repl.key] || '';
-
-      content = content.split(repl.from).join(replValue);
-    }
-
+    content = replaceTextInXml(content, replacements);
     zip.file(xmlFile, content);
   }
 
   return Buffer.from(zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' }));
-}
-
-// Generate Google Docs contract (creates in user folder)
-export async function generateGoogleDoc(data: ContractData): Promise<string> {
-  const auth = getGoogleAuth();
-  const docs = google.docs({ version: 'v1', auth });
-  const drive = google.drive({ version: 'v3', auth });
-  const vars = buildTemplateVars(data);
-  const templateDocId = process.env.GOOGLE_TEMPLATE_DOC_ID || '1VbW68N29MY98Zmgawel4Vm3Voxj5Pnft2wm9YLC2T9o';
-  const fileName = `Договор ${vars.CONTRACT_NUMBER} - ${vars.CLIENT_NAME} - ${vars.CAR_BRAND_MODEL}`;
-
-  // Try copy approach first, fall back to DOCX upload
-  try {
-    const copy = await drive.files.copy({
-      fileId: templateDocId,
-      requestBody: { name: fileName, parents: [process.env.GOOGLE_DRIVE_FOLDER_ID!] },
-    });
-    const newDocId = copy.data.id!;
-
-    // Replace placeholders and hardcoded values
-    const requests = Object.entries(vars).map(([key, value]) => ({
-      replaceAllText: { containsText: { text: '{{' + key + '}}', matchCase: true }, replaceText: value || '' },
-    }));
-    const hardcoded = TEMPLATE_REPLACEMENTS.map(r => {
-      let val = '';
-      if (r.key === '_DURATION_RU') val = vars.DURATION_DAYS + ' сутки';
-      else if (r.key === '_DURATION_GE') val = vars.DURATION_DAYS + ' დღეღამის';
-      else if (r.key === '_TOTAL_RENT_USD') val = vars.TOTAL_RENT + ' USD';
-      else if (r.key === '_DEPOSIT_USD') val = vars.DEPOSIT + '$';
-      else val = vars[r.key] || '';
-      return { replaceAllText: { containsText: { text: r.from, matchCase: true }, replaceText: val } };
-    });
-    await docs.documents.batchUpdate({ documentId: newDocId, requestBody: { requests: [...requests, ...hardcoded] } });
-    return `https://docs.google.com/document/d/${newDocId}/edit`;
-  } catch (copyError: any) {
-    // Fallback: generate DOCX locally and upload as Google Doc
-    const docxBuf = await generateDocx(data);
-    const media = { mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', body: require('stream').Readable.from(docxBuf) };
-    const uploaded = await drive.files.create({
-      requestBody: { name: fileName, mimeType: 'application/vnd.google-apps.document', parents: [process.env.GOOGLE_DRIVE_FOLDER_ID!] },
-      media,
-    });
-    return `https://docs.google.com/document/d/${uploaded.data.id}/edit`;
-  }
 }
 
 // Generate DOCX locally (no Drive storage needed)
@@ -186,41 +164,35 @@ export async function generateDocx(data: ContractData): Promise<Buffer> {
   return replaceInDocx(templateBuffer, vars);
 }
 
-// Generate PDF by exporting template as PDF after text replacement
-export async function generatePdf(data: ContractData): Promise<Buffer> {
+// Generate Google Docs - requires Drive storage, may fail
+export async function generateGoogleDoc(data: ContractData): Promise<string> {
   const auth = getGoogleAuth();
   const drive = google.drive({ version: 'v3', auth });
+  const docs = google.docs({ version: 'v1', auth });
+  const vars = buildTemplateVars(data);
   const templateDocId = process.env.GOOGLE_TEMPLATE_DOC_ID || '1VbW68N29MY98Zmgawel4Vm3Voxj5Pnft2wm9YLC2T9o';
+  const fileName = `Договор ${vars.CONTRACT_NUMBER} - ${vars.CLIENT_NAME} - ${vars.CAR_BRAND_MODEL}`;
 
-  // Try the copy approach first for best PDF quality
-  try {
-    const vars = buildTemplateVars(data);
-    const docs = google.docs({ version: 'v1', auth });
-    const copy = await drive.files.copy({
-      fileId: templateDocId,
-      requestBody: { name: 'temp-contract', parents: [process.env.GOOGLE_DRIVE_FOLDER_ID!] },
-    });
-    const newDocId = copy.data.id!;
-
-    const requests = Object.entries(vars).map(([key, value]) => ({
-      replaceAllText: { containsText: { text: '{{' + key + '}}', matchCase: true }, replaceText: value || '' },
-    }));
-    const hardcoded = TEMPLATE_REPLACEMENTS.map(r => {
-      let val = '';
-      if (r.key === '_DURATION_RU') val = vars.DURATION_DAYS + ' сутки';
-      else if (r.key === '_DURATION_GE') val = vars.DURATION_DAYS + ' დღეღამის';
-      else if (r.key === '_TOTAL_RENT_USD') val = vars.TOTAL_RENT + ' USD';
-      else if (r.key === '_DEPOSIT_USD') val = vars.DEPOSIT + '$';
-      else val = vars[r.key] || '';
-      return { replaceAllText: { containsText: { text: r.from, matchCase: true }, replaceText: val } };
-    });
-    await docs.documents.batchUpdate({ documentId: newDocId, requestBody: { requests: [...requests, ...hardcoded] } });
-
-    const response = await drive.files.export({ fileId: newDocId, mimeType: 'application/pdf' }, { responseType: 'arraybuffer' });
-    try { await drive.files.delete({ fileId: newDocId }); } catch (e) {}
-    return Buffer.from(response.data as ArrayBuffer);
-  } catch (e) {
-    // Fallback: return DOCX (user can convert to PDF)
-    return generateDocx(data);
+  const copy = await drive.files.copy({
+    fileId: templateDocId,
+    requestBody: { name: fileName, parents: [process.env.GOOGLE_DRIVE_FOLDER_ID!] },
+  });
+  const newDocId = copy.data.id!;
+  const replacements = buildReplacements(vars);
+  const requests = replacements.map(([from, to]) => ({
+    replaceAllText: { containsText: { text: from, matchCase: true }, replaceText: to || '' },
+  }));
+  // Also {{VAR}} replacements
+  for (const [key, value] of Object.entries(vars)) {
+    requests.push({ replaceAllText: { containsText: { text: '{{' + key + '}}', matchCase: true }, replaceText: value || '' } });
   }
+  await docs.documents.batchUpdate({ documentId: newDocId, requestBody: { requests } });
+  return `https://docs.google.com/document/d/${newDocId}/edit`;
+}
+
+// Generate PDF - export DOCX as PDF is not possible locally, so return DOCX with notice
+export async function generatePdf(data: ContractData): Promise<Buffer> {
+  // Since service account has 0 Drive storage, we cannot use Google Docs for PDF conversion
+  // Generate DOCX instead - the API route should handle the format appropriately
+  return generateDocx(data);
 }
