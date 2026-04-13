@@ -137,7 +137,10 @@ export async function generateDocx(data: ContractData): Promise<Buffer> {
   return replaceInDocx(templateBuffer, vars);
 }
 
-// Generate Google Docs - uses OAuth2 user account (khmiadashviliniko@gmail.com) to avoid service account Drive quota limit
+// Generate Google Docs - hybrid approach:
+// 1. Service account downloads template as DOCX (has read access)
+// 2. OAuth2 user uploads DOCX to their Drive as Google Doc (drive.file scope is enough for new uploads)
+// 3. Docs API applies text replacements
 export async function generateGoogleDoc(data: ContractData): Promise<string> {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_OAUTH_CLIENT_ID,
@@ -147,19 +150,31 @@ export async function generateGoogleDoc(data: ContractData): Promise<string> {
   const drive = google.drive({ version: 'v3', auth: oauth2Client });
   const docs = google.docs({ version: 'v1', auth: oauth2Client });
   const vars = buildTemplateVars(data);
-  const templateDocId = process.env.GOOGLE_TEMPLATE_DOC_ID || '1VbW68N29MY98Zmgawel4Vm3Voxj5Pnft2wm9YLC2T9o';
   const fileName = `Договор ${vars.CONTRACT_NUMBER} - ${vars.CLIENT_NAME} - ${vars.CAR_BRAND_MODEL}`;
 
-  const copy = await drive.files.copy({
-    fileId: templateDocId,
-    requestBody: { name: fileName, parents: [process.env.GOOGLE_DRIVE_FOLDER_ID!] },
+  // Step 1: Download template as DOCX using service account (has read access)
+  const templateBuffer = await downloadTemplateAsDocx();
+
+  // Step 2: Upload DOCX to OAuth user's Drive, converting to Google Doc format
+  const { Readable } = await import('stream');
+  const stream = Readable.from(templateBuffer);
+  const uploadResult = await drive.files.create({
+    requestBody: {
+      name: fileName,
+      mimeType: 'application/vnd.google-apps.document',
+    },
+    media: {
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      body: stream,
+    },
   });
-  const newDocId = copy.data.id!;
+  const newDocId = uploadResult.data.id!;
+
+  // Step 3: Apply text replacements via Docs API
   const replacements = buildReplacements(vars);
   const requests = replacements.map(([from, to]) => ({
     replaceAllText: { containsText: { text: from, matchCase: true }, replaceText: to || '' },
   }));
-  // Also {{VAR}} replacements
   for (const [key, value] of Object.entries(vars)) {
     requests.push({ replaceAllText: { containsText: { text: '{{' + key + '}}', matchCase: true }, replaceText: value || '' } });
   }
