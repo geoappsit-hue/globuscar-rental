@@ -68,44 +68,64 @@ export function CarSelector({ cars, loading, selectedCar, onSelect }: Props) {
           <button
             key={car.id}
             onClick={() => onSelect(car)}
-            className={`text-left p-4 rounded-lg border-2 transition-all hover:shadow-md ${
+            className={`text-left rounded-lg border-2 transition-all hover:shadow-md overflow-hidden ${
               selectedCar?.id === car.id
                 ? 'border-primary-500 bg-primary-50'
                 : 'border-gray-200 hover:border-primary-300'
             }`}
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="font-semibold text-gray-900">
-                  {car.brand} {car.model}
-                </p>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  {car.year} | {car.color} | {car.bodyType}
-                </p>
-                <p className="text-sm font-mono text-gray-600 mt-1">
-                  {car.plateNumber}
-                </p>
+            {/* Photo */}
+            {car.photoUrl ? (
+              <div className="w-full h-32 bg-gray-100 overflow-hidden">
+                <img
+                  src={car.photoUrl}
+                  alt={`${car.brand} ${car.model}`}
+                  className="w-full h-full object-cover"
+                  onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
               </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-400">Депозит</p>
-                <p className="text-sm font-semibold text-gray-700">${car.deposit || '—'}</p>
+            ) : (
+              <div className="w-full h-24 bg-gray-100 flex items-center justify-center">
+                <svg className="w-10 h-10 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                </svg>
               </div>
-            </div>
-            <div className="flex gap-2 mt-2 flex-wrap">
-              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                {car.transmission}
-              </span>
-              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                {car.fuel}
-              </span>
-              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                {car.seats} мест
-              </span>
-              {car.climate && (
-                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
-                  {car.climate}
+            )}
+            {/* Info */}
+            <div className="p-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm">
+                    {car.brand} {car.model}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {car.year} | {car.color} | {car.bodyType}
+                  </p>
+                  <p className="text-xs font-mono text-gray-600 mt-0.5">
+                    {car.plateNumber}
+                  </p>
+                </div>
+                <div className="text-right ml-2 shrink-0">
+                  <p className="text-xs text-gray-400">Депозит</p>
+                  <p className="text-sm font-semibold text-gray-700">${car.deposit || '—'}</p>
+                </div>
+              </div>
+              <div className="flex gap-1.5 mt-2 flex-wrap">
+                <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                  {car.transmission}
                 </span>
-              )}
+                <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                  {car.fuel}
+                </span>
+                <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                  {car.seats} мест
+                </span>
+                {car.climate && (
+                  <span className="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">
+                    {car.climate}
+                  </span>
+                )}
+              </div>
             </div>
           </button>
         ))}
