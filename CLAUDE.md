@@ -32,20 +32,23 @@ Next.js 14 App Router web application for car rental contract management, deploy
 
 ## Template Replacement Values
 The template contains hardcoded sample data that gets replaced with actual client/car data:
-- `MAKSIMOV SERGEI` → client name
-- `AUDI Q7 PREMIUM PLUS` → car brand/model
-- `FD756FD` → plate number
-- `AJA4062951` → tech passport
+- `CHAN SHEUNG CHIT` → client name
+- `TOYOTA GRANDHIGHLANDER XLE` → car brand/model
+- `JU594UU` → plate number
 - `04/0155` → contract number
-- `11.04.2026` → start date
-- `12.04.2026` → end date
+- `12.04.2026` → start date (NOTE: this is START date, end date handled via {{END_DATE}})
 - `10.04.2000` → client birth date
 - `RUS 76 5355392` → client passport
-- `1 сутки` / `1 დღეღამის` → duration
-- `66  USD` (double space!) → total rent
+- `15.03.2020` → passport issued date
+- `15.03.2030` → passport valid until
+- `МВД 78003` → passport issued by
+- `+79215885778` → phone
+- `5 сутки` / `5 დღეღამის` → duration
+- `426  USD` (double space!) → total rent
 - `0$` → deposit
 - `GRAY` → car color
-- `2018` → car year
+- `2024` → car year
+- VIN and tech passport fields are **empty** in template (no placeholder to replace)
 - See `buildReplacements()` in contract-generator.ts for full list
 
 ## Known Limitations

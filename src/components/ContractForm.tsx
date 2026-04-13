@@ -201,8 +201,18 @@ export function ContractForm() {
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="text-sm font-medium text-gray-500 mb-2">Условия</h4>
                 <p className="font-semibold">Договор {rentalData.contractNumber}</p>
-                <p className="text-sm text-gray-600">{rentalData.durationDays} суток | {rentalData.totalRent} USD</p>
+                <p className="text-sm text-gray-600">Начало: {rentalData.startDate}</p>
+                <p className="text-sm text-gray-600">{rentalData.durationDays} сут. | {rentalData.dailyRate} USD/сут. | Итого: {rentalData.totalRent} USD</p>
                 <p className="text-sm text-gray-600">Депозит: {rentalData.deposit} USD</p>
+                {rentalData.superKasko && (
+                  <p className="text-sm text-gray-600">Super КАСКО: {rentalData.superKaskoTotal} USD</p>
+                )}
+                {rentalData.deliveryType && (
+                  <p className="text-sm text-gray-600">Доставка ({rentalData.deliveryType}): {rentalData.deliveryCost} USD</p>
+                )}
+                {rentalData.fuelLevel && (
+                  <p className="text-sm text-gray-600">Топливо: {rentalData.fuelLevel}</p>
+                )}
               </div>
             </div>
 

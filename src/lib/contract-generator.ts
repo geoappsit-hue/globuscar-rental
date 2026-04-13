@@ -55,28 +55,26 @@ export function buildTemplateVars(data: ContractData) {
 }
 
 // Build all text replacements (hardcoded sample values -> actual data)
+// Values correspond to the current template doc (1VbW68N29MY98Zmgawel4Vm3Voxj5Pnft2wm9YLC2T9o)
 function buildReplacements(vars: Record<string, string>): [string, string][] {
   return [
-    ['MAKSIMOV SERGEI', vars.CLIENT_NAME],
+    ['CHAN SHEUNG CHIT', vars.CLIENT_NAME],
     ['04/0155', vars.CONTRACT_NUMBER],
-    ['11.04.2026', vars.START_DATE],
-    ['12.04.2026', vars.END_DATE],
-    ['AUDI Q7 PREMIUM PLUS', vars.CAR_BRAND_MODEL],
-    ['FD756FD', vars.CAR_PLATE],
-    ['WA1VAAF77JD006032', vars.CAR_VIN],
-    ['AJA4062951', vars.CAR_TECH_PASSPORT],
+    ['12.04.2026', vars.START_DATE],
+    ['TOYOTA GRANDHIGHLANDER XLE', vars.CAR_BRAND_MODEL],
+    ['JU594UU', vars.CAR_PLATE],
     ['10.04.2000', vars.CLIENT_BIRTH_DATE],
     ['RUS 76 5355392', vars.CLIENT_PASSPORT],
     ['15.03.2020', vars.CLIENT_PASSPORT_ISSUED],
     ['15.03.2030', vars.CLIENT_PASSPORT_VALID],
     ['МВД 78003', vars.CLIENT_PASSPORT_ISSUED_BY],
     ['+79215885778', vars.CLIENT_PHONE],
-    ['1 сутки', vars.DURATION_DAYS + ' сутки'],
-    ['1 დღეღამის', vars.DURATION_DAYS + ' დღეღამის'],
-    ['66  USD', vars.TOTAL_RENT + ' USD'],
+    ['5 сутки', vars.DURATION_DAYS + ' сутки'],
+    ['5 დღეღამის', vars.DURATION_DAYS + ' დღეღამის'],
+    ['426  USD', vars.TOTAL_RENT + ' USD'],
     ['0$', vars.DEPOSIT + '$'],
     ['GRAY', vars.CAR_COLOR],
-    ['2018', vars.CAR_YEAR],
+    ['2024', vars.CAR_YEAR],
   ];
 }
 
