@@ -35,6 +35,7 @@ export interface Car {
   techPassportNumber: string;
   techPassportColor: string;
   photoUrl: string;
+  galleryPhotoUrl: string;
 }
 
 export interface ClientData {

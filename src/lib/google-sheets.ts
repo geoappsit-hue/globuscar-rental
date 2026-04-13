@@ -31,7 +31,7 @@ const COL = {
   LICENSE_CAT: 19, INTERIOR: 20, CLIMATE: 21, ROOF: 22,
   CRUISE: 23, CAMERA: 24, PARKTRONIC: 25, ABS: 26, EBD: 27,
   ESP: 28, AIRBAGS: 29, KM_LIMIT: 30, NOTE: 31, VIN: 32,
-  TECH_PASSPORT: 33, TECH_COLOR: 34, PHOTO_URL: 35,
+  TECH_PASSPORT: 33, TECH_COLOR: 34, COVER_PHOTO_URL: 35, GALLERY_PHOTO_URL: 36,
 };
 
 function rowToCar(row: string[]): Car {
@@ -72,7 +72,8 @@ function rowToCar(row: string[]): Car {
     vin: get(COL.VIN),
     techPassportNumber: get(COL.TECH_PASSPORT),
     techPassportColor: get(COL.TECH_COLOR),
-    photoUrl: get(COL.PHOTO_URL),
+    photoUrl: get(COL.COVER_PHOTO_URL),
+    galleryPhotoUrl: get(COL.GALLERY_PHOTO_URL),
   };
 }
 
@@ -82,7 +83,7 @@ export async function getCars(): Promise<Car[]> {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.GOOGLE_SPREADSHEET_ID,
-    range: 'Лист1!A2:AJ',  // Skip header row
+    range: 'Лист1!A2:AK',  // Skip header row
   });
 
   const rows = response.data.values || [];
