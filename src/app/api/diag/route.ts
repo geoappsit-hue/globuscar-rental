@@ -24,7 +24,7 @@ export async function GET() {
       if (txts.length > 0) paras.push(txts.join(''));
     }
     const fullText = paras.join('\n');
-    const found = [...new Set([...fullText.matchAll(/\{\{([A-Z_]+)\}\}/g)].map(m => m[1]))].sort();
+    const found = Array.from(new Set(Array.from(fullText.matchAll(/\{\{([A-Z_]+)\}\}/g)).map((m: RegExpExecArray) => m[1]))).sort();
     return NextResponse.json({ vars_found: found, count: paras.length, text: fullText });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

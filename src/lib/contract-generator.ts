@@ -54,30 +54,6 @@ export function buildTemplateVars(data: ContractData) {
   };
 }
 
-// Build all text replacements (hardcoded sample values -> actual data)
-// Values correspond to the current template doc (1VbW68N29MY98Zmgawel4Vm3Voxj5Pnft2wm9YLC2T9o)
-function buildReplacements(vars: Record<string, string>): [string, string][] {
-  return [
-    ['CHAN SHEUNG CHIT', vars.CLIENT_NAME],
-    ['04/0155', vars.CONTRACT_NUMBER],
-    ['12.04.2026', vars.START_DATE],
-    ['TOYOTA GRANDHIGHLANDER XLE', vars.CAR_BRAND_MODEL],
-    ['JU594UU', vars.CAR_PLATE],
-    ['10.04.2000', vars.CLIENT_BIRTH_DATE],
-    ['RUS 76 5355392', vars.CLIENT_PASSPORT],
-    ['15.03.2020', vars.CLIENT_PASSPORT_ISSUED],
-    ['15.03.2030', vars.CLIENT_PASSPORT_VALID],
-    ['МВД 78003', vars.CLIENT_PASSPORT_ISSUED_BY],
-    ['+79215885778', vars.CLIENT_PHONE],
-    ['5 сутки', vars.DURATION_DAYS + ' сутки'],
-    ['5 დღეღამის', vars.DURATION_DAYS + ' დღეღამის'],
-    ['426  USD', vars.TOTAL_RENT + ' USD'],
-    ['0$', vars.DEPOSIT + '$'],
-    ['GRAY', vars.CAR_COLOR],
-    ['2024', vars.CAR_YEAR],
-  ];
-}
-
 // Simple text replacement in XML - replace directly in XML content
 function replaceTextInXml(xml: string, replacements: [string, string][]): string {
   let result = xml;
@@ -108,12 +84,7 @@ async function downloadTemplateAsDocx(): Promise<Buffer> {
 // Replace text in all DOCX XML parts
 function replaceInDocx(docxBuffer: Buffer, vars: Record<string, string>): Buffer {
   const zip = new PizZip(docxBuffer);
-  const replacements = buildReplacements(vars);
-
-  // Also add {{VAR}} replacements
-  for (const [key, value] of Object.entries(vars)) {
-    replacements.push(['{{' + key + '}}', value || '']);
-  }
+  const replacements: [string, string][] = Object.entries(vars).map(([key, value]) => ['{{' + key + '}}', value || '']);
 
   const xmlFiles = ['word/document.xml', 'word/header1.xml', 'word/header2.xml', 'word/header3.xml',
     'word/footer1.xml', 'word/footer2.xml', 'word/footer3.xml'];
@@ -168,13 +139,9 @@ export async function generateGoogleDoc(data: ContractData): Promise<string> {
   const newDocId = uploadResult.data.id!;
 
   // Step 3: Apply text replacements via Docs API
-  const replacements = buildReplacements(vars);
-  const requests = replacements.map(([from, to]) => ({
-    replaceAllText: { containsText: { text: from, matchCase: true }, replaceText: to || '' },
+  const requests = Object.entries(vars).map(([key, value]) => ({
+    replaceAllText: { containsText: { text: '{{' + key + '}}', matchCase: true }, replaceText: value || '' },
   }));
-  for (const [key, value] of Object.entries(vars)) {
-    requests.push({ replaceAllText: { containsText: { text: '{{' + key + '}}', matchCase: true }, replaceText: value || '' } });
-  }
   await docs.documents.batchUpdate({ documentId: newDocId, requestBody: { requests } });
   return `https://docs.google.com/document/d/${newDocId}/edit`;
 }
