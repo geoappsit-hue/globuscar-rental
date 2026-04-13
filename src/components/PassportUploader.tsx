@@ -76,7 +76,6 @@ export function PassportUploader({ clientData, onChange, onNext, onBack }: Props
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
           onChange={handleFileUpload}
           className="hidden"
         />
