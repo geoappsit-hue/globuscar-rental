@@ -156,8 +156,6 @@ export async function generateGoogleDoc(data: ContractData): Promise<string> {
   const templateBuffer = await downloadTemplateAsDocx();
 
   // Step 2: Upload DOCX to OAuth user's Drive, converting to Google Doc format
-  const { Readable } = await import('stream');
-  const stream = Readable.from(templateBuffer);
   const uploadResult = await drive.files.create({
     requestBody: {
       name: fileName,
@@ -165,7 +163,7 @@ export async function generateGoogleDoc(data: ContractData): Promise<string> {
     },
     media: {
       mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      body: stream,
+      body: templateBuffer,
     },
   });
   const newDocId = uploadResult.data.id!;
