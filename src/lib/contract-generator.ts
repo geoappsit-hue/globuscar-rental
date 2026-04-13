@@ -47,8 +47,11 @@ export function buildTemplateVars(data: ContractData) {
     DEPOSIT: data.rental.deposit.toString(),
     SUPER_KASKO: data.rental.superKasko ? 'Да / დიახ' : 'Нет / არა',
     SUPER_KASKO_TOTAL: data.rental.superKaskoTotal.toString(),
-    DELIVERY_TYPE: data.rental.deliveryType || '',
+    DELIVERY_TYPE: data.rental.deliveryLocation || data.rental.deliveryType || '',
     DELIVERY_COST: data.rental.deliveryCost.toString(),
+    DELIVERY_LOCATION: data.rental.deliveryLocation || '',
+    RETURN_LOCATION: data.rental.returnLocation || '',
+    RETURN_COST: data.rental.returnCost.toString(),
     FUEL_LEVEL: data.rental.fuelLevel || '',
     FRANCHISE: data.car.franchise || '500',
   };

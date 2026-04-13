@@ -21,7 +21,8 @@ export function ContractForm() {
     contractNumber: '', startDate: '', durationDays: 1,
     dailyRate: 0, totalRent: 0, deposit: 0,
     superKasko: false, superKaskoTotal: 0,
-    deliveryType: 'self', deliveryCost: 0,
+    deliveryType: '', deliveryCost: 0, deliveryLocation: '',
+    returnType: '', returnLocation: '', returnCost: 0,
     fuelLevel: '', additionalNotes: '',
   });
   const [generating, setGenerating] = useState(false);
@@ -207,8 +208,11 @@ export function ContractForm() {
                 {rentalData.superKasko && (
                   <p className="text-sm text-gray-600">Super КАСКО: {rentalData.superKaskoTotal} USD</p>
                 )}
-                {rentalData.deliveryType && (
-                  <p className="text-sm text-gray-600">Доставка ({rentalData.deliveryType}): {rentalData.deliveryCost} USD</p>
+                {rentalData.deliveryLocation && (
+                  <p className="text-sm text-gray-600">Доставка ({rentalData.deliveryLocation}): {rentalData.deliveryCost} USD</p>
+                )}
+                {rentalData.returnLocation && (
+                  <p className="text-sm text-gray-600">Возврат ({rentalData.returnLocation}): {rentalData.returnCost} USD</p>
                 )}
                 {rentalData.fuelLevel && (
                   <p className="text-sm text-gray-600">Топливо: {rentalData.fuelLevel}</p>

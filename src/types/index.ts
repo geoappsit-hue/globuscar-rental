@@ -61,8 +61,18 @@ export interface RentalConditions {
   superKaskoTotal: number;
   deliveryType: string;
   deliveryCost: number;
+  deliveryLocation: string;  // human-readable location name for template
+  returnType: string;        // selected return option key
+  returnLocation: string;    // human-readable return location for template
+  returnCost: number;        // return cost
   totalRent: number;
   additionalNotes: string;
+}
+
+export interface LocationOption {
+  value: string;   // row number "1"-"6" or "other"
+  label: string;   // display name
+  cost: number;    // price (0 for "Другое")
 }
 
 export interface ContractData {

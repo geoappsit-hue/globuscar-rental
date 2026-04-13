@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import { Car } from '@/types';
+import { Car, LocationOption } from '@/types';
 
 const SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets.readonly',
@@ -95,4 +95,19 @@ export async function getCars(): Promise<Car[]> {
 export async function getCarById(id: string): Promise<Car | null> {
   const cars = await getCars();
   return cars.find(car => car.id === id) || null;
+}
+
+export async function getLocationOptions(tab: 'Доставка' | 'Возврат'): Promise<LocationOption[]> {
+  const auth = getAuth();
+  const sheets = google.sheets({ version: 'v4', auth });
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: process.env.GOOGLE_SPREADSHEET_ID,
+    range: `${tab}!A2:D20`,
+  });
+  const rows = response.data.values || [];
+  return rows.map((row: string[]) => ({
+    value: row[0] || '',       // № column
+    label: row[1] || '',       // Наименование column
+    cost: parseFloat(row[2]) || 0,  // Цена column
+  }));
 }
