@@ -1,20 +1,26 @@
 import { NextResponse } from 'next/server';
+import { google } from 'googleapis';
 
 export async function GET() {
-  const id = process.env.GOOGLE_OAUTH_CLIENT_ID || '';
-  const secret = process.env.GOOGLE_OAUTH_CLIENT_SECRET || '';
-  const token = process.env.GOOGLE_OAUTH_REFRESH_TOKEN || '';
-  return NextResponse.json({
-    client_id_len: id.length,
-    client_id_start: id.slice(0, 6),
-    client_id_end: id.slice(-4),
-    client_id_has_cr: id.includes('\r'),
-    secret_len: secret.length,
-    secret_start: secret.slice(0, 8),
-    secret_has_cr: secret.includes('\r'),
-    token_len: token.length,
-    token_start: token.slice(0, 6),
-    token_has_cr: token.includes('\r'),
-  });
+  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID || '';
+  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET || '';
+  const refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN || '';
+
+  try {
+    const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    const { token } = await oauth2Client.getAccessToken();
+    return NextResponse.json({
+      ok: true,
+      token_prefix: token ? token.slice(0, 10) + '...' : null,
+    });
+  } catch (e: any) {
+    return NextResponse.json({
+      ok: false,
+      error: e.message,
+      code: e.code,
+      status: e.status,
+    }, { status: 500 });
+  }
 }
 export const dynamic = 'force-dynamic';
