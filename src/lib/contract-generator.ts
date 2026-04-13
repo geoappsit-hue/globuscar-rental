@@ -2,6 +2,7 @@ import { ContractData } from '@/types';
 import { google } from 'googleapis';
 import { getGoogleAuth } from './google-sheets';
 import PizZip from 'pizzip';
+import { Readable } from 'stream';
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return '';
@@ -163,7 +164,7 @@ export async function generateGoogleDoc(data: ContractData): Promise<string> {
     },
     media: {
       mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      body: templateBuffer,
+      body: Readable.from(templateBuffer),
     },
   });
   const newDocId = uploadResult.data.id!;
