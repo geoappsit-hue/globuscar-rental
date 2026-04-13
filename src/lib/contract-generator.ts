@@ -20,9 +20,42 @@ function addDays(dateStr: string, days: number): string {
   return formatDate(date.toISOString());
 }
 
+function buildServicesSummary(data: ContractData): string {
+  const r = data.rental;
+  const insuranceLabel = ({ kasko: 'КАСКО', super_kasko: 'СуперКАСКО', full_coverage: 'Полное покрытие' } as Record<string, string>)[r.insuranceType] || r.insuranceType;
+  const lines: string[] = [];
+
+  lines.push(`Аренда ТС: ${r.durationDays} сут. × ${r.dailyRate} USD = ${r.totalRent} USD`);
+
+  if (r.insuranceType !== 'kasko' && r.insuranceTotal > 0) {
+    lines.push(`${insuranceLabel}: ${r.insuranceDailyRate} USD/сут. × ${r.durationDays} сут. = ${r.insuranceTotal} USD`);
+  } else {
+    lines.push(`${insuranceLabel}: включено`);
+  }
+
+  if (r.deliveryLocation || r.deliveryCost > 0) {
+    const loc = r.deliveryLocation || 'Доставка';
+    lines.push(`Доставка (${loc}): ${r.deliveryCost} USD`);
+  }
+
+  if (r.returnLocation || r.returnCost > 0) {
+    const loc = r.returnLocation || 'Возврат';
+    lines.push(`Возврат (${loc}): ${r.returnCost} USD`);
+  }
+
+  const totalPayable = r.totalRent + r.insuranceTotal + r.deliveryCost + r.returnCost;
+  lines.push(`─────────────────────`);
+  lines.push(`Итого к оплате: ${totalPayable} USD`);
+  lines.push(`Депозит (возвращается): ${r.deposit} USD`);
+
+  return lines.join('\n');
+}
+
 export function buildTemplateVars(data: ContractData) {
   const startDate = formatDate(data.rental.startDate);
   const endDate = addDays(startDate, data.rental.durationDays);
+  const r = data.rental;
+  const totalPayable = r.totalRent + r.insuranceTotal + r.deliveryCost + r.returnCost;
   return {
     CONTRACT_NUMBER: data.rental.contractNumber,
     CONTRACT_DATE: startDate,
@@ -58,6 +91,8 @@ export function buildTemplateVars(data: ContractData) {
     RETURN_COST: data.rental.returnCost.toString(),
     FUEL_LEVEL: data.rental.fuelLevel || '',
     FRANCHISE: data.car.franchise || '500',
+    TOTAL_PAYABLE: totalPayable.toString(),
+    SERVICES_SUMMARY: buildServicesSummary(data),
   };
 }
 
