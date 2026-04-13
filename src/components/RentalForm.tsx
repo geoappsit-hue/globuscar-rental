@@ -29,11 +29,13 @@ export function RentalForm({ rentalData, selectedCar, onChange, onNext, onBack }
   // Recalculate totals
   useEffect(() => {
     const totalRent = rentalData.dailyRate * rentalData.durationDays;
-    const superKaskoTotal = rentalData.superKasko ? 20 * rentalData.durationDays : 0;
-    if (totalRent !== rentalData.totalRent || superKaskoTotal !== rentalData.superKaskoTotal) {
-      onChange({ ...rentalData, totalRent, superKaskoTotal });
+    const insuranceTotal = rentalData.insuranceType !== 'kasko'
+      ? rentalData.insuranceDailyRate * rentalData.durationDays
+      : 0;
+    if (totalRent !== rentalData.totalRent || insuranceTotal !== rentalData.insuranceTotal) {
+      onChange({ ...rentalData, totalRent, insuranceTotal });
     }
-  }, [rentalData.dailyRate, rentalData.durationDays, rentalData.superKasko]);
+  }, [rentalData.dailyRate, rentalData.durationDays, rentalData.insuranceType, rentalData.insuranceDailyRate]);
 
   const update = (field: keyof RentalConditions, value: any) => {
     onChange({ ...rentalData, [field]: value });
@@ -63,11 +65,21 @@ export function RentalForm({ rentalData, selectedCar, onChange, onNext, onBack }
 
   const isDeliveryOther = locationOptions.delivery.find(o => o.value === rentalData.deliveryType)?.label === 'Другое';
   const isReturnOther = locationOptions.return.find(o => o.value === rentalData.returnType)?.label === 'Другое';
+  const insuranceHasCost = rentalData.insuranceType === 'super_kasko' || rentalData.insuranceType === 'full_coverage';
+
+  const handleInsuranceChange = (type: string) => {
+    onChange({
+      ...rentalData,
+      insuranceType: type,
+      insuranceDailyRate: type === 'kasko' ? 0 : rentalData.insuranceDailyRate,
+      insuranceTotal: type === 'kasko' ? 0 : rentalData.insuranceDailyRate * rentalData.durationDays,
+    });
+  };
 
   const isValid = rentalData.contractNumber && rentalData.startDate &&
     rentalData.durationDays > 0 && rentalData.dailyRate > 0;
 
-  const totalPayable = rentalData.totalRent + rentalData.superKaskoTotal + rentalData.deliveryCost + rentalData.returnCost;
+  const totalPayable = rentalData.totalRent + rentalData.insuranceTotal + rentalData.deliveryCost + rentalData.returnCost;
 
   return (
     <div className="space-y-6">
@@ -130,16 +142,33 @@ export function RentalForm({ rentalData, selectedCar, onChange, onNext, onBack }
       <div className="border-t pt-4 space-y-4">
         <h4 className="text-sm font-medium text-gray-700">Дополнительные услуги</h4>
 
-        {/* SuperKasko */}
-        <label className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer">
-          <input type="checkbox" checked={rentalData.superKasko}
-            onChange={e => update('superKasko', e.target.checked)}
-            className="w-4 h-4 text-primary-600 rounded" />
-          <div>
-            <span className="text-sm font-medium">СуперКАСКО</span>
-            <span className="text-sm text-gray-500 ml-2">20 USD/сутки</span>
-          </div>
-        </label>
+        {/* Insurance */}
+        <div className="space-y-2">
+          <label className="input-label">Страховка</label>
+          <select
+            value={rentalData.insuranceType}
+            onChange={e => handleInsuranceChange(e.target.value)}
+            className="input-field"
+          >
+            <option value="kasko">КАСКО</option>
+            <option value="super_kasko">СуперКАСКО</option>
+            <option value="full_coverage">Полное покрытие</option>
+          </select>
+          {insuranceHasCost && (
+            <div>
+              <label className="input-label">Стоимость страховки в сутки (USD)</label>
+              <input
+                type="number" min={0}
+                value={rentalData.insuranceDailyRate}
+                onChange={e => update('insuranceDailyRate', parseFloat(e.target.value) || 0)}
+                className="input-field"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Итого: {rentalData.insuranceDailyRate * rentalData.durationDays} USD ({rentalData.insuranceDailyRate} × {rentalData.durationDays} сут.)
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* Delivery */}
         <div className="space-y-2">
@@ -207,10 +236,10 @@ export function RentalForm({ rentalData, selectedCar, onChange, onNext, onBack }
           <span className="text-gray-600">Аренда ({rentalData.durationDays} суток):</span>
           <span className="font-semibold text-right">{rentalData.totalRent} USD</span>
 
-          {rentalData.superKasko && (
+          {rentalData.insuranceTotal > 0 && (
             <>
-              <span className="text-gray-600">СуперКАСКО:</span>
-              <span className="font-semibold text-right">{rentalData.superKaskoTotal} USD</span>
+              <span className="text-gray-600">{{ kasko: 'КАСКО', super_kasko: 'СуперКАСКО', full_coverage: 'Полное покрытие' }[rentalData.insuranceType]}:</span>
+              <span className="font-semibold text-right">{rentalData.insuranceTotal} USD</span>
             </>
           )}
 

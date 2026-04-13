@@ -20,7 +20,7 @@ export function ContractForm() {
   const [rentalData, setRentalData] = useState<RentalConditions>({
     contractNumber: '', startDate: '', durationDays: 1,
     dailyRate: 0, totalRent: 0, deposit: 0,
-    superKasko: false, superKaskoTotal: 0,
+    insuranceType: 'kasko', insuranceDailyRate: 0, insuranceTotal: 0,
     deliveryType: '', deliveryCost: 0, deliveryLocation: '',
     returnType: '', returnLocation: '', returnCost: 0,
     fuelLevel: '', additionalNotes: '',
@@ -205,8 +205,10 @@ export function ContractForm() {
                 <p className="text-sm text-gray-600">Начало: {rentalData.startDate}</p>
                 <p className="text-sm text-gray-600">{rentalData.durationDays} сут. | {rentalData.dailyRate} USD/сут. | Итого: {rentalData.totalRent} USD</p>
                 <p className="text-sm text-gray-600">Депозит: {rentalData.deposit} USD</p>
-                {rentalData.superKasko && (
-                  <p className="text-sm text-gray-600">Super КАСКО: {rentalData.superKaskoTotal} USD</p>
+                {rentalData.insuranceTotal > 0 && (
+                  <p className="text-sm text-gray-600">
+                    {{ kasko: 'КАСКО', super_kasko: 'СуперКАСКО', full_coverage: 'Полное покрытие' }[rentalData.insuranceType] || 'Страховка'}: {rentalData.insuranceTotal} USD
+                  </p>
                 )}
                 {rentalData.deliveryLocation && (
                   <p className="text-sm text-gray-600">Доставка ({rentalData.deliveryLocation}): {rentalData.deliveryCost} USD</p>

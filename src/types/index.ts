@@ -57,8 +57,9 @@ export interface RentalConditions {
   dailyRate: number;
   deposit: number;
   fuelLevel: string;
-  superKasko: boolean;
-  superKaskoTotal: number;
+  insuranceType: string;      // kasko | super_kasko | full_coverage
+  insuranceDailyRate: number; // cost per day (for super_kasko / full_coverage)
+  insuranceTotal: number;     // insuranceDailyRate * durationDays
   deliveryType: string;
   deliveryCost: number;
   deliveryLocation: string;  // human-readable location name for template
