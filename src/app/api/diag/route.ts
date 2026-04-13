@@ -23,7 +23,9 @@ export async function GET() {
       while ((t2 = tr.exec(m[0])) !== null) txts.push(t2[1]);
       if (txts.length > 0) paras.push(txts.join(''));
     }
-    return NextResponse.json({ count: paras.length, text: paras.join('\n'), files: Object.keys(zip.files).filter(f=>f.endsWith('.xml')) });
+    const fullText = paras.join('\n');
+    const found = [...new Set([...fullText.matchAll(/\{\{([A-Z_]+)\}\}/g)].map(m => m[1]))].sort();
+    return NextResponse.json({ vars_found: found, count: paras.length, text: fullText });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
