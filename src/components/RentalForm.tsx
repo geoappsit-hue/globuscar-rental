@@ -107,6 +107,7 @@ export function RentalForm({ rentalData, selectedCar, onChange, onNext, onBack }
           <label className="input-label">Срок аренды (суток) *</label>
           <input type="number" min={1} value={rentalData.durationDays}
             onChange={e => update('durationDays', parseInt(e.target.value) || 1)}
+            onFocus={e => e.target.select()}
             className="input-field" />
         </div>
 
@@ -115,6 +116,7 @@ export function RentalForm({ rentalData, selectedCar, onChange, onNext, onBack }
           <label className="input-label">Стоимость аренды в сутки (USD) *</label>
           <input type="number" min={0} value={rentalData.dailyRate}
             onChange={e => update('dailyRate', parseFloat(e.target.value) || 0)}
+            onFocus={e => e.target.select()}
             className="input-field" />
         </div>
 
@@ -123,6 +125,7 @@ export function RentalForm({ rentalData, selectedCar, onChange, onNext, onBack }
           <label className="input-label">Депозит (USD)</label>
           <input type="number" min={0} value={rentalData.deposit}
             onChange={e => update('deposit', parseFloat(e.target.value) || 0)}
+            onFocus={e => e.target.select()}
             className="input-field" />
           {selectedCar?.deposit && (
             <p className="text-xs text-gray-400 mt-1">По умолчанию из базы: ${selectedCar.deposit}</p>
@@ -161,6 +164,7 @@ export function RentalForm({ rentalData, selectedCar, onChange, onNext, onBack }
                 type="number" min={0}
                 value={rentalData.insuranceDailyRate}
                 onChange={e => update('insuranceDailyRate', parseFloat(e.target.value) || 0)}
+                onFocus={e => e.target.select()}
                 className="input-field"
               />
               <p className="text-xs text-gray-400 mt-1">
@@ -193,6 +197,7 @@ export function RentalForm({ rentalData, selectedCar, onChange, onNext, onBack }
                 <label className="input-label">Стоимость доставки (USD)</label>
                 <input type="number" min={0} value={rentalData.deliveryCost}
                   onChange={e => update('deliveryCost', parseFloat(e.target.value) || 0)}
+                  onFocus={e => e.target.select()}
                   className="input-field" />
               </div>
             </div>
@@ -222,6 +227,7 @@ export function RentalForm({ rentalData, selectedCar, onChange, onNext, onBack }
                 <label className="input-label">Стоимость возврата (USD)</label>
                 <input type="number" min={0} value={rentalData.returnCost}
                   onChange={e => update('returnCost', parseFloat(e.target.value) || 0)}
+                  onFocus={e => e.target.select()}
                   className="input-field" />
               </div>
             </div>
