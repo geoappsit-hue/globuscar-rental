@@ -72,6 +72,7 @@ export function buildTemplateVars(data: ContractData) {
     CLIENT_PASSPORT_VALID: formatDate(data.client.passportValidUntil),
     CLIENT_PASSPORT_ISSUED_BY: data.client.passportIssuedBy || '',
     CLIENT_PHONE: data.client.phone,
+    CLIENT_EMAIL: data.client.email || '',
     START_DATE: startDate,
     END_DATE: endDate,
     DURATION_DAYS: data.rental.durationDays.toString(),
@@ -90,7 +91,7 @@ export function buildTemplateVars(data: ContractData) {
     RETURN_LOCATION: data.rental.returnLocation || '',
     RETURN_COST: data.rental.returnCost.toString(),
     FUEL_LEVEL: data.rental.fuelLevel || '',
-    FRANCHISE: data.car.franchise || '500',
+    FRANCHISE: data.rental.franchise?.toString() || data.car.franchise || '500',
     TOTAL_PAYABLE: totalPayable.toString(),
     SERVICES_SUMMARY: buildServicesSummary(data),
   };

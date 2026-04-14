@@ -132,6 +132,16 @@ export function RentalForm({ rentalData, selectedCar, onChange, onNext, onBack }
           )}
         </div>
 
+        {/* Franchise */}
+        <div>
+          <label className="input-label">Франшиза (GEL)</label>
+          <input type="number" min={0} value={rentalData.franchise}
+            onChange={e => update('franchise', parseFloat(e.target.value) || 0)}
+            onFocus={e => e.target.select()}
+            className="input-field" />
+          <p className="text-xs text-gray-400 mt-1">По умолчанию: 500 GEL</p>
+        </div>
+
         {/* Fuel level */}
         <div>
           <label className="input-label">Уровень топлива при передаче</label>

@@ -23,7 +23,7 @@ export function ContractForm() {
     insuranceType: 'kasko', insuranceDailyRate: 0, insuranceTotal: 0,
     deliveryType: '', deliveryCost: 0, deliveryLocation: '',
     returnType: '', returnLocation: '', returnCost: 0,
-    fuelLevel: '', additionalNotes: '',
+    fuelLevel: '', franchise: 500, additionalNotes: '',
   });
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<{ url?: string; format?: string } | null>(null);
@@ -58,6 +58,7 @@ export function ContractForm() {
       setRentalData(prev => ({
         ...prev,
         deposit: parseInt(selectedCar.deposit) || 200,
+        franchise: parseInt(selectedCar.franchise) || 500,
         dailyRate: 0, // Will be set manually
       }));
     }

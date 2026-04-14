@@ -67,6 +67,7 @@ export interface RentalConditions {
   returnLocation: string;    // human-readable return location for template
   returnCost: number;        // return cost
   totalRent: number;
+  franchise: number;         // deductible amount in GEL (default 500)
   additionalNotes: string;
 }
 
