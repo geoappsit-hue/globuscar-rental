@@ -36,6 +36,33 @@ export interface Car {
   techPassportColor: string;
   photoUrl: string;
   galleryPhotoUrl: string;
+  plateType: string; // 'гос' | 'транзит' | '' — column AL in Google Sheets
+}
+
+export interface Fine {
+  id: string;
+  carId: string;
+  carPlate: string;
+  carName: string;
+  source: 'protocols.ge' | 'videos.police.ge';
+  fineNumber: string;
+  violationDate: string;
+  location: string;
+  violation: string;
+  amount: number;
+  currency: string;
+  status: string;
+  sourceUrl: string;
+  rawData?: Record<string, unknown>;
+  checkedAt: string;
+}
+
+export interface FinesCheckResult {
+  fines: Fine[];
+  errors: Array<{ carPlate: string; source: string; error: string }>;
+  checkedAt: string;
+  carsChecked: number;
+  carsSkipped: number;
 }
 
 export interface ClientData {

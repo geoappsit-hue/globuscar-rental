@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/check-fines",
+      "schedule": "0 8 * * *"
+    }
+  ],
+  "functions": {
+    "src/app/api/fines/check/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/check-fines/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}

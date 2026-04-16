@@ -22,16 +22,28 @@ export function getGoogleAuth() {
   return getAuth();
 }
 
-// Column mapping: A=0, B=1, ..., AJ=35
+// Column mapping based on actual sheet structure (A=0, B=1, ...)
+// Sheet columns: A=ID, B=Марка, C=Модель, D=Гос.номер,
+//   E=Номер техпаспорта, F=Тип номера, G=Год, H=Цвет, I=Тип кузова,
+//   J=Топливо, K=КПП, L=Привод, M=Дверей, N=Мест, O=Объем двиг.,
+//   P=Мощность, Q=Расход, R=Бак, S=Руль, T=Депозит, U=Франшиза,
+//   V=Кат.прав., W=Салон, X=Климат, Y=Крыша, Z=Круиз,
+//   AA=Камера, AB=Парктроник, AC=ABS, AD=EBD, AE=ESP, AF=Подушки,
+//   AG=Лимит км/день, AH=Примечание, AI=VIN, AJ=Цвет из техпаспорта,
+//   AK=URL фото обложки, AL=URL фото галереи
 const COL = {
-  ID: 0, BRAND: 1, MODEL: 2, PLATE: 3, YEAR: 4, COLOR: 5,
-  BODY_TYPE: 6, FUEL: 7, TRANSMISSION: 8, DRIVE: 9, DOORS: 10,
-  SEATS: 11, ENGINE_VOL: 12, POWER: 13, CONSUMPTION: 14,
-  TANK: 15, STEERING: 16, DEPOSIT: 17, FRANCHISE: 18,
-  LICENSE_CAT: 19, INTERIOR: 20, CLIMATE: 21, ROOF: 22,
-  CRUISE: 23, CAMERA: 24, PARKTRONIC: 25, ABS: 26, EBD: 27,
-  ESP: 28, AIRBAGS: 29, KM_LIMIT: 30, NOTE: 31, VIN: 32,
-  TECH_PASSPORT: 33, TECH_COLOR: 34, COVER_PHOTO_URL: 35, GALLERY_PHOTO_URL: 36,
+  ID: 0, BRAND: 1, MODEL: 2, PLATE: 3,
+  TECH_PASSPORT: 4,  // E — Номер техпаспорта
+  PLATE_TYPE: 5,     // F — Тип номера ('гос' | 'транзит')
+  YEAR: 6, COLOR: 7, BODY_TYPE: 8, FUEL: 9, TRANSMISSION: 10,
+  DRIVE: 11, DOORS: 12, SEATS: 13, ENGINE_VOL: 14, POWER: 15,
+  CONSUMPTION: 16, TANK: 17, STEERING: 18, DEPOSIT: 19, FRANCHISE: 20,
+  LICENSE_CAT: 21, INTERIOR: 22, CLIMATE: 23, ROOF: 24, CRUISE: 25,
+  CAMERA: 26, PARKTRONIC: 27, ABS: 28, EBD: 29, ESP: 30,
+  AIRBAGS: 31, KM_LIMIT: 32, NOTE: 33, VIN: 34,
+  TECH_COLOR: 35,        // AJ — Цвет из техпаспорта
+  COVER_PHOTO_URL: 36,   // AK — URL фото обложки
+  GALLERY_PHOTO_URL: 37, // AL — URL фото галереи
 };
 
 function rowToCar(row: string[]): Car {
@@ -74,6 +86,7 @@ function rowToCar(row: string[]): Car {
     techPassportColor: get(COL.TECH_COLOR),
     photoUrl: get(COL.COVER_PHOTO_URL),
     galleryPhotoUrl: get(COL.GALLERY_PHOTO_URL),
+    plateType: get(COL.PLATE_TYPE),
   };
 }
 
@@ -83,7 +96,7 @@ export async function getCars(): Promise<Car[]> {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.GOOGLE_SPREADSHEET_ID,
-    range: 'Лист1!A2:AK',  // Skip header row
+    range: 'Лист1!A2:AL',  // Skip header row
   });
 
   const rows = response.data.values || [];
