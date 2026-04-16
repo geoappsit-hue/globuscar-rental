@@ -19,7 +19,7 @@ const nextConfig = {
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals = [
-        ...((config.externals as any[]) || []),
+        ...(Array.isArray(config.externals) ? config.externals : []),
         'puppeteer',
         'puppeteer-core',
         '@sparticuz/chromium',
