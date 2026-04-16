@@ -15,6 +15,9 @@
 
 'use strict';
 
+// Загружаем .env.local если есть
+try { require('dotenv').config({ path: require('path').join(__dirname, '../.env.local') }); } catch {}
+
 const https = require('https');
 const http = require('http');
 
@@ -28,7 +31,7 @@ const PRIVATE_KEY = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n')
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-function fetchUrl(url, options = {}) {
+function fetchUrl(url, options = {}, redirects = 5) {
   return new Promise((resolve, reject) => {
     const lib = url.startsWith('https') ? https : http;
     const req = lib.request(url, {
@@ -36,6 +39,16 @@ function fetchUrl(url, options = {}) {
       headers: options.headers || {},
       rejectUnauthorized: false,
     }, res => {
+      // Follow redirects
+      if ([301, 302, 307, 308].includes(res.statusCode) && res.headers.location && redirects > 0) {
+        const redirectUrl = res.headers.location.startsWith('http')
+          ? res.headers.location
+          : new URL(res.headers.location, url).toString();
+        // For 307/308 keep method; for 301/302 use GET
+        const redirectMethod = [307, 308].includes(res.statusCode) ? options.method : 'GET';
+        res.resume();
+        return fetchUrl(redirectUrl, { ...options, method: redirectMethod }, redirects - 1).then(resolve, reject);
+      }
       const chunks = [];
       res.on('data', c => chunks.push(c));
       res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(chunks).toString('utf8') }));
@@ -121,11 +134,16 @@ async function checkVideosPolice(car, checkedAt) {
     const rawCookies = (initRes.headers['set-cookie'] || []);
     const cookieHeader = (Array.isArray(rawCookies) ? rawCookies : [rawCookies])
       .map(c => c.split(';')[0]).join('; ');
-    const tokenMatch = initRes.body.match(/name=["']?token["']?\s+value=["']([^"']+)["']/i);
-    const token = tokenMatch?.[1] || '';
+    const csrfMatch = initRes.body.match(/name=["']csrf_token["'][^>]*value=["']([^"']+)["']/i)
+      || initRes.body.match(/name=["']token["'][^>]*value=["']([^"']+)["']/i);
+    const csrfToken = csrfMatch?.[1] || '';
 
-    const body = new URLSearchParams({ documentNo: car.techPassportNumber, vehicleNo2: car.plateNumber, lang: 'en' });
-    if (token) body.set('token', token);
+    const formBody = new URLSearchParams({
+      documentNo: car.techPassportNumber,
+      vehicleNo2: car.plateNumber,
+      lang: 'en',
+      ...(csrfToken ? { csrf_token: csrfToken } : {}),
+    });
 
     const postRes = await fetchUrl('https://videos.police.ge/submit-index.php', {
       method: 'POST',
@@ -135,10 +153,23 @@ async function checkVideosPolice(car, checkedAt) {
         Referer: 'https://videos.police.ge/?lang=en',
         Cookie: cookieHeader,
       },
-      body: body.toString(),
+      body: formBody.toString(),
     });
 
-    const rows = parseHtmlTables(postRes.body);
+    // Follow 302 redirect (GET) carrying the session cookie
+    let html = postRes.body;
+    if ([301, 302].includes(postRes.status) && postRes.headers.location) {
+      const loc = postRes.headers.location;
+      const redirectUrl = loc.startsWith('http') ? loc : 'https://videos.police.ge/' + loc.replace(/^\//, '');
+      const redirectRes = await fetchUrl(redirectUrl, { headers: { 'User-Agent': UA, Cookie: cookieHeader } });
+      html = redirectRes.body;
+    }
+
+    // Results page contains a table WITHOUT form inputs
+    const allTables = html.match(/<table[\s\S]*?<\/table>/gi) || [];
+    const resultTables = allTables.filter(t => !/<input/i.test(t));
+    const rows = resultTables.flatMap(t => parseHtmlTables(t));
+
     const isHeader = row => row.every(c => /^(#|N|Date|Status|Amount|Protocol|Plate|Tech|ტ|დ)/i.test(c) || c === '');
     const dataRows = rows.filter(r => !isHeader(r));
 

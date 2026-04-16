@@ -48,32 +48,47 @@ async function checkVideosPolice(
     const initHtml = await initRes.text();
 
     // Extract hidden token if present
-    const tokenMatch = initHtml.match(/name=["']?token["']?\s+value=["']([^"']+)["']/i);
-    const token = tokenMatch?.[1] ?? '';
+    const csrfMatch =
+      initHtml.match(/name=["']csrf_token["'][^>]*value=["']([^"']+)["']/i) ??
+      initHtml.match(/name=["']token["'][^>]*value=["']([^"']+)["']/i);
+    const csrfToken = csrfMatch?.[1] ?? '';
 
     // Step 2: POST search form
-    const body = new URLSearchParams({
+    const formBody = new URLSearchParams({
       documentNo: car.techPassportNumber,
       vehicleNo2: car.plateNumber,
       lang: 'en',
-      ...(token ? { token } : {}),
+      ...(csrfToken ? { csrf_token: csrfToken } : {}),
     });
 
     const postRes = await fetch('https://videos.police.ge/submit-index.php', {
       method: 'POST',
+      redirect: 'manual',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'User-Agent': UA,
         Referer: 'https://videos.police.ge/?lang=en',
         Cookie: cookieHeader,
       },
-      body: body.toString(),
+      body: formBody.toString(),
     });
 
-    const html = await postRes.text();
-    const rows = parseHtmlTables(html);
+    // Follow 302 redirect with GET carrying session cookie
+    let html = await postRes.text();
+    const location = postRes.headers.get('location');
+    if ((postRes.status === 301 || postRes.status === 302) && location) {
+      const redirectUrl = location.startsWith('http')
+        ? location
+        : 'https://videos.police.ge/' + location.replace(/^\//, '');
+      const rRes = await fetch(redirectUrl, { headers: { 'User-Agent': UA, Cookie: cookieHeader } });
+      html = await rRes.text();
+    }
 
-    // Skip rows that look like headers or form controls
+    // Results page: only tables that have NO input elements
+    const allTablesHtml = html.match(/<table[\s\S]*?<\/table>/gi) ?? [];
+    const resultTablesHtml = allTablesHtml.filter(t => !/<input/i.test(t));
+    const rows = resultTablesHtml.flatMap(t => parseHtmlTables(t));
+
     const isHeader = (row: string[]) =>
       row.every(c => /^(#|N|Date|Status|Amount|Protocol|Plate|Tech|ტ|დ)/i.test(c) || c === '');
 
