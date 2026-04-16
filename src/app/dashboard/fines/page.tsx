@@ -41,7 +41,8 @@ function timeAgo(iso: string) {
 export default function FinesPage() {
   const [result, setResult] = useState<FinesCheckResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showScriptInfo, setShowScriptInfo] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState('');
   const [filterSource, setFilterSource] = useState<string>('all');
   const [filterCar, setFilterCar] = useState<string>('all');
 
@@ -59,6 +60,25 @@ export default function FinesPage() {
   useEffect(() => {
     loadCached();
   }, [loadCached]);
+
+  const handleCheck = async () => {
+    setChecking(true);
+    setError('');
+    try {
+      const res = await fetch('/api/fines/check', { method: 'POST' });
+      const text = await res.text();
+      let json: any;
+      try { json = JSON.parse(text); } catch {
+        throw new Error(`Ошибка сервера (${res.status}): ${text.slice(0, 150)}`);
+      }
+      if (!res.ok) throw new Error(json.error || 'Ошибка проверки');
+      setResult(json.data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setChecking(false);
+    }
+  };
 
   const fines = result?.fines || [];
   const unpaidFines = fines.filter(f =>
@@ -86,40 +106,29 @@ export default function FinesPage() {
             </p>
           )}
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={loadCached}
-            disabled={loading}
-            className="btn-secondary flex items-center gap-2"
-          >
-            {loading ? (
-              <span className="inline-block h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-            ) : '↻'} Обновить
-          </button>
-          <button
-            onClick={() => setShowScriptInfo(v => !v)}
-            className="btn-primary"
-          >
-            Как проверить штрафы?
-          </button>
-        </div>
+        <button
+          onClick={handleCheck}
+          disabled={checking}
+          className="btn-primary flex items-center gap-2"
+        >
+          {checking ? (
+            <>
+              <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Проверяем...
+            </>
+          ) : 'Проверить штрафы'}
+        </button>
       </div>
 
-      {/* Script info banner */}
-      {showScriptInfo && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4 text-sm">
-          <p className="font-medium text-blue-800 mb-2">Проверка запускается локально с вашего компьютера</p>
-          <p className="text-blue-700 mb-2">
-            Грузинские сайты (videos.police.ge, protocols.ge) блокируют запросы с облачных серверов.
-            Скрипт нужно запускать на компьютере в Грузии:
-          </p>
-          <code className="block bg-blue-100 text-blue-900 rounded px-3 py-2 font-mono text-xs mb-2">
-            cd C:\Users\Admin\code\globuscar-rental{'\n'}
-            node scripts/check-fines.js
-          </code>
-          <p className="text-blue-600 text-xs">
-            Результаты автоматически загружаются в панель. Можно добавить в Планировщик задач Windows для ежедневного запуска.
-          </p>
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 mb-4 text-sm">
+          {error}
+        </div>
+      )}
+
+      {checking && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-700 rounded-lg px-4 py-3 mb-4 text-sm">
+          Проверяем штрафы через прокси-сервер... Это может занять до минуты.
         </div>
       )}
 
