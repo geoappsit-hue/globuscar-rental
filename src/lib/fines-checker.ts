@@ -101,7 +101,8 @@ async function checkVideosPolice(
       });
     }
   } catch (err: any) {
-    return { fines, error: err.message };
+    const cause = err?.cause ? ` (cause: ${err.cause?.message ?? String(err.cause)})` : '';
+    return { fines, error: err.message + cause };
   }
   return { fines };
 }
@@ -160,7 +161,8 @@ async function checkProtocolsGe(
       }
     }
   } catch (err: any) {
-    return { fines, error: err.message };
+    const cause = err?.cause ? ` (cause: ${err.cause?.message ?? String(err.cause)})` : '';
+    return { fines, error: err.message + cause };
   }
   return { fines };
 }
