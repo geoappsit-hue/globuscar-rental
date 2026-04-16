@@ -55,6 +55,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </nav>
           </div>
           <div className="flex items-center gap-4">
+            <span className="text-xs text-gray-300 font-mono" title={process.env.NEXT_PUBLIC_BUILD_TIME}>
+              v{process.env.NEXT_PUBLIC_BUILD_SHA}
+            </span>
             <span className="text-sm text-gray-600">{session.user?.email}</span>
             <button
               onClick={() => signOut({ callbackUrl: '/login' })}
