@@ -60,7 +60,13 @@ export default function FinesPage() {
     setError('');
     try {
       const res = await fetch('/api/fines/check', { method: 'POST' });
-      const json = await res.json();
+      const text = await res.text();
+      let json: any;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        throw new Error(`Сервер вернул не-JSON ответ (статус ${res.status}): ${text.slice(0, 200)}`);
+      }
       if (!res.ok) throw new Error(json.error || 'Ошибка проверки');
       setResult(json.data);
     } catch (err: any) {
