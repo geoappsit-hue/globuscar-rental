@@ -5,11 +5,25 @@ let lastCheckResult: FinesCheckResult | null = null;
 
 // Proxy support: set FINES_PROXY_URL in Vercel env vars
 // Format: http://user:password@proxy.host:port
-async function getFetchOptions(extra: RequestInit = {}): Promise<RequestInit> {
+// Uses undici ProxyAgent (built into Node.js 18+) since native fetch ignores `agent`
+let _proxyDispatcher: any = null;
+async function getDispatcher() {
   const proxyUrl = process.env.FINES_PROXY_URL;
-  if (!proxyUrl) return extra;
-  const { HttpsProxyAgent } = await import('https-proxy-agent');
-  return { ...extra, agent: new HttpsProxyAgent(proxyUrl) } as RequestInit;
+  if (!proxyUrl) return undefined;
+  if (!_proxyDispatcher) {
+    const { ProxyAgent } = await import('undici');
+    _proxyDispatcher = new ProxyAgent(proxyUrl);
+  }
+  return _proxyDispatcher;
+}
+
+async function proxyFetch(url: string, options: any = {}): Promise<Response> {
+  const dispatcher = await getDispatcher();
+  if (dispatcher) {
+    const { fetch: undiciFetch } = await import('undici');
+    return undiciFetch(url, { ...options, dispatcher }) as unknown as Response;
+  }
+  return fetch(url, options);
 }
 
 export function getCachedFines(): FinesCheckResult | null {
@@ -49,8 +63,8 @@ async function checkVideosPolice(
   const fines: Fine[] = [];
   try {
     // Step 1: load page to get session cookie
-    const initRes = await fetch('https://videos.police.ge/?lang=en',
-      await getFetchOptions({ headers: { 'User-Agent': UA } })
+    const initRes = await proxyFetch('https://videos.police.ge/?lang=en',
+      { headers: { 'User-Agent': UA } }
     );
     const rawCookies = initRes.headers.getSetCookie?.() ?? [];
     const cookieHeader = rawCookies.map(c => c.split(';')[0]).join('; ');
@@ -70,19 +84,17 @@ async function checkVideosPolice(
       ...(csrfToken ? { csrf_token: csrfToken } : {}),
     });
 
-    const postRes = await fetch('https://videos.police.ge/submit-index.php',
-      await getFetchOptions({
-        method: 'POST',
-        redirect: 'manual',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'User-Agent': UA,
-          Referer: 'https://videos.police.ge/?lang=en',
-          Cookie: cookieHeader,
-        },
-        body: formBody.toString(),
-      })
-    );
+    const postRes = await proxyFetch('https://videos.police.ge/submit-index.php', {
+      method: 'POST',
+      redirect: 'manual',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': UA,
+        Referer: 'https://videos.police.ge/?lang=en',
+        Cookie: cookieHeader,
+      },
+      body: formBody.toString(),
+    });
 
     // Follow 302 redirect with GET carrying session cookie
     let html = await postRes.text();
@@ -91,8 +103,8 @@ async function checkVideosPolice(
       const redirectUrl = location.startsWith('http')
         ? location
         : 'https://videos.police.ge/' + location.replace(/^\//, '');
-      const rRes = await fetch(redirectUrl,
-        await getFetchOptions({ headers: { 'User-Agent': UA, Cookie: cookieHeader } })
+      const rRes = await proxyFetch(redirectUrl,
+        { headers: { 'User-Agent': UA, Cookie: cookieHeader } }
       );
       html = await rRes.text();
     }
@@ -142,25 +154,23 @@ async function checkProtocolsGe(
 ): Promise<{ fines: Fine[]; error?: string }> {
   const fines: Fine[] = [];
   try {
-    const res = await fetch('https://api.protocols.ge/api/getByID',
-      await getFetchOptions({
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Origin: 'https://protocols.ge',
-          Referer: 'https://protocols.ge/',
-          'User-Agent': UA,
-        },
-        body: JSON.stringify({
-          govNumber: car.plateNumber,
-          techPass: car.techPassportNumber,
-          page: 0,
-          size: 100,
-          recaptchaToken: 'bypass',
-        }),
-      })
-    );
+    const res = await proxyFetch('https://api.protocols.ge/api/getByID', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Origin: 'https://protocols.ge',
+        Referer: 'https://protocols.ge/',
+        'User-Agent': UA,
+      },
+      body: JSON.stringify({
+        govNumber: car.plateNumber,
+        techPass: car.techPassportNumber,
+        page: 0,
+        size: 100,
+        recaptchaToken: 'bypass',
+      }),
+    });
 
     if (!res.ok) {
       const errText = await res.text();
