@@ -22,7 +22,8 @@
     "puppeteer-core": "^24.41.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "sharp": "^0.33.0"
+    "sharp": "^0.33.0",
+    "undici": "^8.1.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

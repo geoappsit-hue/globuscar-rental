@@ -10,7 +10,7 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
-    serverComponentsExternalPackages: ['puppeteer-core', '@sparticuz/chromium', 'puppeteer'],
+    serverComponentsExternalPackages: ['puppeteer-core', '@sparticuz/chromium', 'puppeteer', 'undici'],
   },
   env: {
     NEXT_PUBLIC_BUILD_SHA: (process.env.VERCEL_GIT_COMMIT_SHA || 'local').slice(0, 7),
@@ -23,6 +23,7 @@ const nextConfig = {
         'puppeteer',
         'puppeteer-core',
         '@sparticuz/chromium',
+        'undici',
       ];
     }
     return config;
